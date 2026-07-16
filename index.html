@@ -233,8 +233,8 @@
 
       <div class="card kpi kpi-emerald p-5">
         <div class="text-sm text-slate-500 font-medium">เงินที่ประหยัดได้ต่อปี</div>
-        <div class="text-3xl font-bold text-emerald-700 mt-2 num">฿ 33,833</div>
-        <div class="text-xs text-emerald-700 mt-1 font-medium">▼ ลดต้นทุนสั่งซื้อ+ถือครอง (จากแผนเดิมจริงตามหน้างาน)</div>
+        <div class="text-3xl font-bold text-emerald-700 mt-2 num">฿ 138,733</div>
+        <div class="text-xs text-emerald-700 mt-1 font-medium">▼ ลดต้นทุนสั่งซื้อ+ถือครอง 1.06%</div>
       </div>
     </section>
 
@@ -397,8 +397,8 @@
         <div class="card p-5">
           <div class="flex items-center justify-between mb-4">
             <div>
-              <div class="text-sm font-semibold text-slate-900">ต้นทุนบริหารคลังต่อปี — แผนเดิม vs EOQ</div>
-              <div class="text-xs text-slate-500 mt-0.5">เฉพาะต้นทุนสั่งซื้อ + ต้นทุนถือครอง (ไม่รวมมูลค่าสินค้า เพื่อให้เห็นส่วนต่างชัดเจน)</div>
+              <div class="text-sm font-semibold text-slate-900">ต้นทุนรวมต่อปี — แผนเดิม vs EOQ</div>
+              <div class="text-xs text-slate-500 mt-0.5">Total Cost = ต้นทุนสั่งซื้อ + ต้นทุนถือครอง</div>
             </div>
             <div class="flex items-center gap-3 text-xs">
               <span class="text-slate-500"><span class="legend-dot" style="background: var(--accent-old);"></span>แผนเดิม</span>
@@ -472,49 +472,45 @@
       <div class="hero-savings lg:col-span-2">
         <div class="relative z-10">
           <div class="text-sm font-medium opacity-90">ผลรวมเงินที่ประหยัดได้ต่อปี</div>
-          <div class="text-5xl font-bold mt-2 num">฿ 33,832.95</div>
-          <div class="text-sm opacity-90 mt-2">จากการปรับใช้ EOQ กับ 3 รายการวัสดุกลุ่ม A/B (เทียบกับแผนเดิมจริงตามหน้างาน)</div>
+          <div class="text-5xl font-bold mt-2 num">฿ 138,732.95</div>
+          <div class="text-sm opacity-90 mt-2">จากการปรับใช้ EOQ กับ 3 รายการวัสดุกลุ่ม A/B</div>
           <div class="mt-4 grid grid-cols-3 gap-4 pt-4 border-t border-white/20">
             <div>
               <div class="text-xs opacity-80">MAT001 · ปูนซีเมนต์</div>
-              <div class="text-lg font-bold num">฿ 4,783.50</div>
-              <div class="text-xs opacity-80">14.1% ของการประหยัด</div>
+              <div class="text-lg font-bold num">฿ 99,783.50</div>
+              <div class="text-xs opacity-80">71.9% ของการประหยัด</div>
             </div>
             <div>
               <div class="text-xs opacity-80">MAT003 · เหล็กเส้นข้ออ้อย</div>
               <div class="text-lg font-bold num">฿ 26,325.60</div>
-              <div class="text-xs opacity-80">77.8% ของการประหยัด</div>
+              <div class="text-xs opacity-80">19.0% ของการประหยัด</div>
             </div>
             <div>
               <div class="text-xs opacity-80">MAT002 · อิฐมวลเบา</div>
-              <div class="text-lg font-bold num">฿ 2,723.85</div>
-              <div class="text-xs opacity-80">8.0% ของการประหยัด</div>
+              <div class="text-lg font-bold num">฿ 12,623.85</div>
+              <div class="text-xs opacity-80">9.1% ของการประหยัด</div>
             </div>
           </div>
         </div>
       </div>
 
       <div class="card p-5">
-        <div class="text-sm font-semibold text-slate-900 mb-3">สูตรที่ใช้คำนวณ (ปรับตามบริบทอสังหาฯ)</div>
+        <div class="text-sm font-semibold text-slate-900 mb-3">สูตรที่ใช้คำนวณ</div>
         <div class="space-y-3 text-sm text-slate-700">
           <div class="p-3 rounded-lg bg-slate-50">
             <div class="text-xs text-slate-500 mb-1">Economic Order Quantity</div>
             <div class="font-mono font-semibold text-slate-900">EOQ = √(2 × D × S / H)</div>
-            <div class="text-xs text-slate-600 mt-2 space-y-1 leading-relaxed">
-              <div><span class="font-semibold">D</span> = อุปสงค์/ปี</div>
-              <div><span class="font-semibold">S</span> = Ordering Cost · ต้นทุนสั่งซื้อ <span class="text-slate-500">(รวมค่าเอกสารจัดซื้อและค่าขนส่งต่อเที่ยวเข้าไซต์งาน)</span></div>
-              <div><span class="font-semibold">H</span> = Holding Cost · ต้นทุนถือครอง <span class="text-slate-500">(สำหรับธุรกิจอสังหาฯ คิดจาก: ค่าเงินจมหน้างาน, ค่าความเสียหายพัสดุจากสภาพอากาศ และค่าสูญหายหน้าไซต์งาน)</span></div>
-            </div>
+            <div class="text-xs text-slate-500 mt-1">D = อุปสงค์/ปี · S = ต้นทุนสั่งซื้อ · H = ต้นทุนถือครอง</div>
           </div>
           <div class="p-3 rounded-lg bg-slate-50">
             <div class="text-xs text-slate-500 mb-1">Reorder Point</div>
-            <div class="font-mono font-semibold text-slate-900">ROP = (D / 365) × Lead Time</div>
-            <div class="text-xs text-slate-500 mt-1">จุดสั่งซื้อใหม่เพื่อไม่ให้ของขาด · หน่วยตรงกับสินค้า (ถุง / ชิ้น / เส้น ฯลฯ)</div>
+            <div class="font-mono font-semibold text-slate-900">ROP = อัตราการใช้ × Lead Time</div>
+            <div class="text-xs text-slate-500 mt-1">จุดสั่งซื้อใหม่เพื่อไม่ให้ของขาด</div>
           </div>
           <div class="p-3 rounded-lg bg-slate-50">
-            <div class="text-xs text-slate-500 mb-1">ต้นทุนบริหารคลัง (Inventory Mgmt Cost)</div>
+            <div class="text-xs text-slate-500 mb-1">Total Cost</div>
             <div class="font-mono font-semibold text-slate-900">TC = (D/Q)S + (Q/2)H</div>
-            <div class="text-xs text-slate-500 mt-1">เฉพาะต้นทุนสั่ง + ต้นทุนถือครอง (ไม่รวมมูลค่าสินค้า เพื่อให้เห็นส่วนต่างชัดเจน)</div>
+            <div class="text-xs text-slate-500 mt-1">ต้นทุนรวม = ต้นทุนสั่ง + ต้นทุนถือครอง</div>
           </div>
         </div>
       </div>
@@ -543,29 +539,11 @@
       { code: 'MAT006', name: 'ท่อ PVC ฟ้า 4 นิ้ว (ท่อน)',       demand: 3600,   price: 280,  value: 1008000,  pct: 0.0129, cum: 1.0000, class: 'C' }
     ];
 
-    // แผนเดิมที่ปรับให้สอดคล้องกับหน้างานอสังหาฯ:
-    // - MAT001 ปูนซีเมนต์: สั่งทุก 2 สัปดาห์ (24 ครั้ง/ปี) — ปูนเสื่อมสภาพง่าย เก็บนานไม่ได้
-    // - MAT002 อิฐมวลเบา:  สั่งทุก 2 เดือน  (6 ครั้ง/ปี)  — ใช้พร้อมปูน รอบสั่งใกล้กัน
-    // - MAT003 เหล็กเส้น:  คงที่ 4 ครั้ง/ปี               — ทนทาน เก็บได้นาน
     const eoqData = [
-      { code: 'MAT001', name: 'ปูนซีเมนต์ (ถุง)',           demand: 48000,  price: 145,  s: 2500, h: 0.2,  lt: 7,  class: 'A', eoq: 2877, rop: 921,  oldN: 24, oldTC: 7049000,   newN: 17, newTC: 7044216.5,  saving: 4783.5   },
-      { code: 'MAT002', name: 'อิฐมวลเบา (ชิ้น)',            demand: 120000, price: 18,   s: 1800, h: 0.15, lt: 5,  class: 'B', eoq: 12649,rop: 1644, oldN: 6,  oldTC: 2197800,   newN: 10, newTC: 2195076.15, saving: 2723.85  },
+      { code: 'MAT001', name: 'ปูนซีเมนต์ (ถุง)',           demand: 48000,  price: 145,  s: 2500, h: 0.2,  lt: 7,  class: 'A', eoq: 2877, rop: 921,  oldN: 4,  oldTC: 7144000,   newN: 17, newTC: 7044216.5,  saving: 99783.5  },
+      { code: 'MAT002', name: 'อิฐมวลเบา (ชิ้น)',            demand: 120000, price: 18,   s: 1800, h: 0.15, lt: 5,  class: 'B', eoq: 12649,rop: 1644, oldN: 4,  oldTC: 2207700,   newN: 10, newTC: 2195076.15, saving: 12623.85 },
       { code: 'MAT003', name: 'เหล็กเส้นข้ออ้อย DB12',      demand: 15000,  price: 240,  s: 3500, h: 0.18, lt: 10, class: 'B', eoq: 1559, rop: 411,  oldN: 4,  oldTC: 3695000,   newN: 10, newTC: 3668674.4,  saving: 26325.6  }
     ];
-
-    // ===== หน่วยต่อรายการ (ใช้แสดงในตาราง ROP ให้ตรงกับหน้างาน) =====
-    const unitOf = (name, code) => {
-      if (name.includes('(ถุง)'))   return 'ถุง';
-      if (name.includes('(ชิ้น)'))   return 'ชิ้น';
-      if (name.includes('(คิว)'))    return 'คิว';
-      if (name.includes('(กล่อง)'))  return 'กล่อง';
-      if (name.includes('(ถัง)'))    return 'ถัง';
-      if (name.includes('(ม้วน)'))   return 'ม้วน';
-      if (name.includes('(บาน)'))    return 'บาน';
-      if (name.includes('(ท่อน)'))   return 'ท่อน';
-      if (code === 'MAT003' || code === 'MAT009') return 'เส้น';
-      return 'หน่วย';
-    };
 
     // ===== Helpers =====
     const fmt = n => n.toLocaleString('th-TH', { maximumFractionDigits: 2 });
@@ -612,9 +590,6 @@
     const eoqBody = document.getElementById('eoqBody');
     eoqData.forEach(r => {
       const tr = document.createElement('tr');
-      // คำนวณ ROP จากสูตรจริง: ROP = (Demand/ปี ÷ 365) × Lead Time (วัน)
-      const ropCalc = Math.round((r.demand / 365) * r.lt);
-      const unit = unitOf(r.name, r.code);
       tr.innerHTML = `
         <td class="font-mono text-slate-900 font-semibold">${r.code}</td>
         <td>${r.name}</td>
@@ -625,10 +600,7 @@
         <td class="text-right num">${r.lt}</td>
         <td class="text-center"><span class="pill pill-${r.class}">${r.class}</span></td>
         <td class="text-right num font-semibold text-slate-900">${fmt(r.eoq)}</td>
-        <td class="text-right num">
-          <span class="font-semibold text-slate-900">${fmt(ropCalc)}</span>
-          <span class="text-xs text-slate-500 ml-1">${unit}</span>
-        </td>
+        <td class="text-right num">${fmt(r.rop)}</td>
         <td class="text-right num text-slate-500">${r.oldN}</td>
         <td class="text-right num font-semibold text-emerald-700">${r.newN}</td>
         <td class="text-right num text-slate-500">${fmtM(r.oldTC)}</td>
@@ -831,11 +803,6 @@
     });
 
     // ===== Cost Comparison Chart =====
-    // พล็อตเฉพาะ "ต้นทุนการบริหารคลังแฝง" = ต้นทุนสั่งซื้อ + ต้นทุนถือครอง
-    // ไม่รวมมูลค่าสินค้า (D × price) เพราะตัวเลขหลักล้านจะกลบส่วนต่างที่ประหยัดได้หลักหมื่น
-    const oldIMC = eoqData.map(r => r.oldTC - r.demand * r.price);
-    const newIMC = eoqData.map(r => r.newTC - r.demand * r.price);
-
     const costCtx = document.getElementById('costChart').getContext('2d');
     new Chart(costCtx, {
       type: 'bar',
@@ -843,16 +810,16 @@
         labels: eoqData.map(r => r.name),
         datasets: [
           {
-            label: 'ต้นทุนบริหารคลัง (แผนเดิม)',
-            data: oldIMC,
+            label: 'TC แผนเดิม',
+            data: eoqData.map(r => r.oldTC),
             backgroundColor: '#94a3b8',
             borderRadius: 6,
             borderSkipped: false,
             maxBarThickness: 50
           },
           {
-            label: 'ต้นทุนบริหารคลัง (EOQ)',
-            data: newIMC,
+            label: 'TC แผน EOQ',
+            data: eoqData.map(r => r.newTC),
             backgroundColor: '#10b981',
             borderRadius: 6,
             borderSkipped: false,
@@ -879,10 +846,7 @@
               afterBody: (items) => {
                 const i = items[0].dataIndex;
                 const r = eoqData[i];
-                return [
-                  `ประหยัด: ${fmt(r.saving)} บาท/ปี`,
-                  `(% ของต้นทุนบริหารคลังเดิม: ${((r.saving/oldIMC[i])*100).toFixed(1)}%)`
-                ];
+                return `ประหยัด: ${fmt(r.saving)} บาท (${((r.saving/r.oldTC)*100).toFixed(2)}%)`;
               }
             }
           }
@@ -900,8 +864,7 @@
           y: {
             beginAtZero: true,
             grid: { color: '#f1f5f9' },
-            ticks: { callback: (v) => (v / 1000).toFixed(0) + 'K' },
-            title: { display: true, text: 'ต้นทุนบริหารคลัง (บาท/ปี)', font: { size: 11, weight: '600' }, color: '#64748b' }
+            ticks: { callback: (v) => (v / 1_000_000).toFixed(1) + 'M' }
           }
         }
       }
