@@ -233,8 +233,8 @@
 
       <div class="card kpi kpi-emerald p-5">
         <div class="text-sm text-slate-500 font-medium">เงินที่ประหยัดได้ต่อปี</div>
-        <div class="text-3xl font-bold text-emerald-700 mt-2 num">฿ 138,733</div>
-        <div class="text-xs text-emerald-700 mt-1 font-medium">▼ ลดต้นทุนสั่งซื้อ+ถือครอง 1.06%</div>
+        <div class="text-3xl font-bold text-emerald-700 mt-2 num" id="kpiSavings">฿ 138,733</div>
+        <div class="text-xs text-emerald-700 mt-1 font-medium" id="kpiSavingsDelta">▼ ลดต้นทุนสั่งซื้อ+ถือครอง 1.06%</div>
       </div>
     </section>
 
@@ -391,6 +391,27 @@
         <span class="text-sm text-slate-500">เปรียบเทียบแผนเดิม vs EOQ — ลดต้นทุนรวมต่อปี</span>
       </div>
 
+      <!-- S Filter Row -->
+      <div class="card px-5 py-3 mb-4 flex items-center justify-between flex-wrap gap-3">
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-semibold text-slate-700 mr-2">ต้นทุนสั่งซื้อ (S) ต่อครั้ง:</span>
+          <div class="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-1" role="tablist" id="sFilter">
+            <button data-s="2500" class="filter-btn filter-btn-active px-4 py-1.5 text-sm font-semibold rounded-md transition-all">
+              ฿ 2,500
+            </button>
+            <button data-s="5500" class="filter-btn px-4 py-1.5 text-sm font-semibold rounded-md transition-all">
+              ฿ 5,500
+            </button>
+            <button data-s="10500" class="filter-btn px-4 py-1.5 text-sm font-semibold rounded-md transition-all">
+              ฿ 10,500
+            </button>
+          </div>
+        </div>
+        <div class="text-xs text-slate-500">
+          ปรับค่า S เพื่อดูผลกระทบต่อ EOQ · กราฟ · เงินที่ประหยัด (ใช้กับทั้ง 3 รายการ)
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         <!-- Cost Comparison -->
@@ -472,23 +493,23 @@
       <div class="hero-savings lg:col-span-2">
         <div class="relative z-10">
           <div class="text-sm font-medium opacity-90">ผลรวมเงินที่ประหยัดได้ต่อปี</div>
-          <div class="text-5xl font-bold mt-2 num">฿ 138,732.95</div>
-          <div class="text-sm opacity-90 mt-2">จากการปรับใช้ EOQ กับ 3 รายการวัสดุกลุ่ม A/B</div>
+          <div class="text-5xl font-bold mt-2 num" id="heroSavingsTotal">฿ 138,732.95</div>
+          <div class="text-sm opacity-90 mt-2">จากการปรับใช้ EOQ กับ 3 รายการวัสดุกลุ่ม A/B (S = <span id="heroSavingsS">฿ 2,500</span> ต่อครั้ง)</div>
           <div class="mt-4 grid grid-cols-3 gap-4 pt-4 border-t border-white/20">
             <div>
               <div class="text-xs opacity-80">MAT001 · ปูนซีเมนต์</div>
-              <div class="text-lg font-bold num">฿ 99,783.50</div>
-              <div class="text-xs opacity-80">71.9% ของการประหยัด</div>
+              <div class="text-lg font-bold num" id="heroSavingMAT001">฿ 99,783.50</div>
+              <div class="text-xs opacity-80" id="heroSavingMAT001Pct">71.9% ของการประหยัด</div>
             </div>
             <div>
               <div class="text-xs opacity-80">MAT003 · เหล็กเส้นข้ออ้อย</div>
-              <div class="text-lg font-bold num">฿ 26,325.60</div>
-              <div class="text-xs opacity-80">19.0% ของการประหยัด</div>
+              <div class="text-lg font-bold num" id="heroSavingMAT003">฿ 26,325.60</div>
+              <div class="text-xs opacity-80" id="heroSavingMAT003Pct">19.0% ของการประหยัด</div>
             </div>
             <div>
               <div class="text-xs opacity-80">MAT002 · อิฐมวลเบา</div>
-              <div class="text-lg font-bold num">฿ 12,623.85</div>
-              <div class="text-xs opacity-80">9.1% ของการประหยัด</div>
+              <div class="text-lg font-bold num" id="heroSavingMAT002">฿ 12,623.85</div>
+              <div class="text-xs opacity-80" id="heroSavingMAT002Pct">9.1% ของการประหยัด</div>
             </div>
           </div>
         </div>
@@ -540,10 +561,31 @@
     ];
 
     const eoqData = [
-      { code: 'MAT001', name: 'ปูนซีเมนต์ (ถุง)',           demand: 48000,  price: 145,  s: 2500, h: 0.2,  lt: 7,  class: 'A', eoq: 2877, rop: 921,  oldN: 4,  oldTC: 7144000,   newN: 17, newTC: 7044216.5,  saving: 99783.5  },
-      { code: 'MAT002', name: 'อิฐมวลเบา (ชิ้น)',            demand: 120000, price: 18,   s: 1800, h: 0.15, lt: 5,  class: 'B', eoq: 12649,rop: 1644, oldN: 4,  oldTC: 2207700,   newN: 10, newTC: 2195076.15, saving: 12623.85 },
-      { code: 'MAT003', name: 'เหล็กเส้นข้ออ้อย DB12',      demand: 15000,  price: 240,  s: 3500, h: 0.18, lt: 10, class: 'B', eoq: 1559, rop: 411,  oldN: 4,  oldTC: 3695000,   newN: 10, newTC: 3668674.4,  saving: 26325.6  }
+      { code: 'MAT001', name: 'ปูนซีเมนต์ (ถุง)',           demand: 48000,  price: 145,  h: 0.2,  lt: 7,  class: 'A', rop: 921,  oldN: 4 },
+      { code: 'MAT002', name: 'อิฐมวลเบา (ชิ้น)',            demand: 120000, price: 18,   h: 0.15, lt: 5,  class: 'B', rop: 1644, oldN: 4 },
+      { code: 'MAT003', name: 'เหล็กเส้นข้ออ้อย DB12',      demand: 15000,  price: 240,  h: 0.18, lt: 10, class: 'B', rop: 411,  oldN: 4 }
     ];
+
+    // ===== State: ต้นทุนสั่งซื้อ (S) ต่อครั้ง — ปรับได้จากตัวกรอง =====
+    let currentS = 2500;
+
+    // ===== คำนวณ EOQ + ต้นทุนทั้งหมด ตามค่า S =====
+    // สูตร: EOQ = √(2DS/H) โดย H = h × price (บาทต่อหน่วยต่อปี)
+    //        newN = ⌈D/EOQ⌉, Ordering = newN × S, Holding = (EOQ/2) × H
+    function computeEoqData(s) {
+      return eoqData.map(r => {
+        const H = r.h * r.price;
+        const eoq = Math.round(Math.sqrt(2 * r.demand * s / H));
+        const newN = Math.max(1, Math.ceil(r.demand / eoq));
+        const Qold = r.demand / r.oldN;
+        const imcOld = r.oldN * s + (Qold / 2) * H;
+        const imcNew = newN * s + (eoq / 2) * H;
+        const oldTC = r.demand * r.price + imcOld;
+        const newTC = r.demand * r.price + imcNew;
+        const saving = oldTC - newTC;
+        return { ...r, eoq, newN, oldTC, newTC, saving, imcOld, imcNew, s };
+      });
+    }
 
     // ===== Helpers =====
     const fmt = n => n.toLocaleString('th-TH', { maximumFractionDigits: 2 });
@@ -587,30 +629,36 @@
     renderAbcTable('ALL');
 
     // ===== Render EOQ Table =====
-    const eoqBody = document.getElementById('eoqBody');
-    eoqData.forEach(r => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td class="font-mono text-slate-900 font-semibold">${r.code}</td>
-        <td>${r.name}</td>
-        <td class="text-right num">${fmt(r.demand)}</td>
-        <td class="text-right num">${fmt(r.price)}</td>
-        <td class="text-right num">${fmt(r.s)}</td>
-        <td class="text-right num">${(r.h * 100).toFixed(0)}%</td>
-        <td class="text-right num">${r.lt}</td>
-        <td class="text-center"><span class="pill pill-${r.class}">${r.class}</span></td>
-        <td class="text-right num font-semibold text-slate-900">${fmt(r.eoq)}</td>
-        <td class="text-right num">${fmt(r.rop)}</td>
-        <td class="text-right num text-slate-500">${r.oldN}</td>
-        <td class="text-right num font-semibold text-emerald-700">${r.newN}</td>
-        <td class="text-right num text-slate-500">${fmtM(r.oldTC)}</td>
-        <td class="text-right num font-semibold text-emerald-700">${fmtM(r.newTC)}</td>
-        <td class="text-right num font-bold text-emerald-700">+${fmt(r.saving)}</td>
-      `;
-      eoqBody.appendChild(tr);
-    });
-    const totalSaving = eoqData.reduce((s, r) => s + r.saving, 0);
-    document.getElementById('totalSavings').textContent = '+ ' + fmt(totalSaving) + ' บาท';
+    function renderEoqTable() {
+      const eoqBody = document.getElementById('eoqBody');
+      eoqBody.innerHTML = '';
+      const data = computeEoqData(currentS);
+      let totalSaving = 0;
+      data.forEach(r => {
+        totalSaving += r.saving;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="font-mono text-slate-900 font-semibold">${r.code}</td>
+          <td>${r.name}</td>
+          <td class="text-right num">${fmt(r.demand)}</td>
+          <td class="text-right num">${fmt(r.price)}</td>
+          <td class="text-right num font-semibold text-blue-700">${fmt(currentS)}</td>
+          <td class="text-right num">${(r.h * 100).toFixed(0)}%</td>
+          <td class="text-right num">${r.lt}</td>
+          <td class="text-center"><span class="pill pill-${r.class}">${r.class}</span></td>
+          <td class="text-right num font-semibold text-slate-900">${fmt(r.eoq)}</td>
+          <td class="text-right num">${fmt(r.rop)}</td>
+          <td class="text-right num text-slate-500">${r.oldN}</td>
+          <td class="text-right num font-semibold text-emerald-700">${r.newN}</td>
+          <td class="text-right num text-slate-500">${fmtM(r.oldTC)}</td>
+          <td class="text-right num font-semibold text-emerald-700">${fmtM(r.newTC)}</td>
+          <td class="text-right num font-bold text-emerald-700">+${fmt(r.saving)}</td>
+        `;
+        eoqBody.appendChild(tr);
+      });
+      document.getElementById('totalSavings').textContent = '+ ' + fmt(totalSaving) + ' บาท';
+      return { data, totalSaving };
+    }
 
     // ===== Chart.js global =====
     Chart.defaults.font.family = "'Sarabun', system-ui, sans-serif";
@@ -803,15 +851,16 @@
     });
 
     // ===== Cost Comparison Chart =====
+    const _costInit = computeEoqData(currentS);
     const costCtx = document.getElementById('costChart').getContext('2d');
-    new Chart(costCtx, {
+    const costChart = new Chart(costCtx, {
       type: 'bar',
       data: {
-        labels: eoqData.map(r => r.name),
+        labels: _costInit.map(r => r.name),
         datasets: [
           {
             label: 'TC แผนเดิม',
-            data: eoqData.map(r => r.oldTC),
+            data: _costInit.map(r => r.oldTC),
             backgroundColor: '#94a3b8',
             borderRadius: 6,
             borderSkipped: false,
@@ -819,7 +868,7 @@
           },
           {
             label: 'TC แผน EOQ',
-            data: eoqData.map(r => r.newTC),
+            data: _costInit.map(r => r.newTC),
             backgroundColor: '#10b981',
             borderRadius: 6,
             borderSkipped: false,
@@ -839,13 +888,14 @@
             cornerRadius: 8,
             callbacks: {
               title: (items) => {
-                const r = eoqData[items[0].dataIndex];
+                const data = computeEoqData(currentS);
+                const r = data[items[0].dataIndex];
                 return `${r.code} · ${r.name}`;
               },
               label: (ctx) => `${ctx.dataset.label}: ${fmt(ctx.parsed.y)} บาท`,
               afterBody: (items) => {
-                const i = items[0].dataIndex;
-                const r = eoqData[i];
+                const data = computeEoqData(currentS);
+                const r = data[items[0].dataIndex];
                 return `ประหยัด: ${fmt(r.saving)} บาท (${((r.saving/r.oldTC)*100).toFixed(2)}%)`;
               }
             }
@@ -871,15 +921,16 @@
     });
 
     // ===== Order Frequency Chart =====
+    const _freqInit = computeEoqData(currentS);
     const freqCtx = document.getElementById('freqChart').getContext('2d');
-    new Chart(freqCtx, {
+    const freqChart = new Chart(freqCtx, {
       type: 'bar',
       data: {
-        labels: eoqData.map(r => r.name),
+        labels: _freqInit.map(r => r.name),
         datasets: [
           {
             label: 'ครั้ง/ปี (แผนเดิม)',
-            data: eoqData.map(r => r.oldN),
+            data: _freqInit.map(r => r.oldN),
             backgroundColor: '#94a3b8',
             borderRadius: 6,
             borderSkipped: false,
@@ -887,7 +938,7 @@
           },
           {
             label: 'ครั้ง/ปี (EOQ)',
-            data: eoqData.map(r => r.newN),
+            data: _freqInit.map(r => r.newN),
             backgroundColor: '#10b981',
             borderRadius: 6,
             borderSkipped: false,
@@ -907,7 +958,8 @@
             cornerRadius: 8,
             callbacks: {
               title: (items) => {
-                const r = eoqData[items[0].dataIndex];
+                const data = computeEoqData(currentS);
+                const r = data[items[0].dataIndex];
                 return `${r.code} · ${r.name}`;
               },
               label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y} ครั้ง`
@@ -1063,8 +1115,65 @@
       btn.addEventListener('click', () => applyFilter(btn.dataset.filter));
     });
 
+    // ===== S Filter Logic — ปรับต้นทุนสั่งซื้อ (S) แล้ว recompute ทุกอย่าง =====
+    function applyS(s) {
+      currentS = s;
+
+      // Update button states
+      document.querySelectorAll('#sFilter button').forEach(btn => {
+        const v = parseInt(btn.dataset.s);
+        btn.classList.toggle('filter-btn-active', v === s);
+      });
+
+      // 1) Re-render table + ดึง computed data กลับมา
+      const { data, totalSaving } = renderEoqTable();
+
+      // 2) Update cost chart
+      costChart.data.labels = data.map(r => r.name);
+      costChart.data.datasets[0].data = data.map(r => r.oldTC);
+      costChart.data.datasets[1].data = data.map(r => r.newTC);
+      costChart.update();
+
+      // 3) Update freq chart
+      freqChart.data.labels = data.map(r => r.name);
+      freqChart.data.datasets[0].data = data.map(r => r.oldN);
+      freqChart.data.datasets[1].data = data.map(r => r.newN);
+      freqChart.update();
+
+      // 4) Update hero savings (top section)
+      document.getElementById('heroSavingsTotal').textContent = '฿ ' + fmt(totalSaving);
+      document.getElementById('heroSavingsS').textContent = '฿ ' + currentS.toLocaleString('en-US');
+
+      const itemIds = {
+        'MAT001': ['heroSavingMAT001', 'heroSavingMAT001Pct'],
+        'MAT002': ['heroSavingMAT002', 'heroSavingMAT002Pct'],
+        'MAT003': ['heroSavingMAT003', 'heroSavingMAT003Pct']
+      };
+      data.forEach(r => {
+        const map = itemIds[r.code];
+        if (map) {
+          document.getElementById(map[0]).textContent = '฿ ' + fmt(r.saving);
+          const pct = totalSaving > 0 ? (r.saving / totalSaving * 100).toFixed(1) : '0.0';
+          document.getElementById(map[1]).textContent = pct + '% ของการประหยัด';
+        }
+      });
+
+      // 5) Update KPI
+      const totalTC = data.reduce((sum, r) => sum + r.oldTC, 0);
+      const pctSaving = totalTC > 0 ? (totalSaving / totalTC * 100).toFixed(2) : '0.00';
+      document.getElementById('kpiSavings').textContent = '฿ ' + Math.round(totalSaving).toLocaleString('en-US');
+      document.getElementById('kpiSavingsDelta').textContent = `▼ ลดต้นทุนสั่งซื้อ+ถือครอง ${pctSaving}%`;
+    }
+
+    // Hook up S filter buttons
+    document.querySelectorAll('#sFilter button').forEach(btn => {
+      btn.addEventListener('click', () => applyS(parseInt(btn.dataset.s)));
+    });
+
     // Initial render
     applyFilter('ALL');
+    renderEoqTable();   // populate EOQ table on first load
+    applyS(currentS);   // populate hero/KPI to match default S
   </script>
 </body>
 </html>
