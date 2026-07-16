@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EOQ Dashboard — การวิเคราะห์ปริมาณการสั่งซื้อที่เหมาะสม</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap');
+
+    :root {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --surface-tint: #f8fafc;
+      --border: #e2e8f0;
+      --ink-900: #0f172a;
+      --ink-700: #334155;
+      --ink-500: #64748b;
+      --ink-300: #cbd5e1;
+
+      --brand-900: #1e3a8a;
+      --brand-500: #3b82f6;
+      --brand-300: #93c5fd;
+
+      --accent-old: #94a3b8;
+      --accent-new: #10b981;
+      --accent-save: #059669;
+      --accent-warn: #f59e0b;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      font-family: 'Sarabun', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--ink-900);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
+    }
+
+    .kpi {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kpi::before {
+      content: "";
+      position: absolute;
+      top: 0; right: 0;
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      opacity: 0.08;
+      transform: translate(30%, -30%);
+    }
+
+    .kpi-blue::before { background: var(--brand-500); }
+    .kpi-emerald::before { background: var(--accent-new); }
+    .kpi-amber::before { background: var(--accent-warn); }
+    .kpi-navy::before { background: var(--brand-900); }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .pill-A { background: #dbeafe; color: #1e3a8a; }
+    .pill-B { background: #e0f2fe; color: #075985; }
+    .pill-C { background: #f1f5f9; color: #475569; }
+
+    table { border-collapse: collapse; width: 100%; font-size: 14px; }
+    th {
+      text-align: left;
+      font-weight: 600;
+      color: var(--ink-500);
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-tint);
+      font-size: 12px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      color: var(--ink-700);
+    }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: var(--surface-tint); }
+
+    .num { font-variant-numeric: tabular-nums; }
+
+    .legend-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .filter-btn {
+      background: transparent;
+      color: var(--ink-500);
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .filter-btn:hover { color: var(--ink-900); background: rgba(255,255,255,0.6); }
+    .filter-btn-active {
+      background: #ffffff;
+      color: var(--ink-900);
+      box-shadow: 0 1px 2px rgba(15,23,42,0.08), 0 1px 3px rgba(15,23,42,0.06);
+    }
+    .filter-btn-active[data-filter="A"] { color: #1e3a8a; }
+    .filter-btn-active[data-filter="B"] { color: #075985; }
+    .filter-btn-active[data-filter="C"] { color: #475569; }
+
+    .stat-tile {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .stat-tile-accent {
+      background: linear-gradient(135deg, var(--surface) 0%, var(--surface-tint) 100%);
+    }
+    .stat-tile-bar {
+      height: 4px;
+      border-radius: 999px;
+      margin-top: 8px;
+      background: #f1f5f9;
+      overflow: hidden;
+    }
+    .stat-tile-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.4s ease;
+    }
+
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      height: 320px;
+    }
+    .chart-wrap-sm { height: 260px; }
+    .chart-wrap-lg { height: 360px; }
+
+    .delta-up { color: var(--accent-save); font-weight: 600; }
+    .delta-down { color: var(--ink-500); font-weight: 600; }
+
+    .hero-savings {
+      background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
+      color: white;
+      border-radius: 16px;
+      padding: 24px 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-savings::before {
+      content: "";
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 160px; height: 160px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+    }
+    .hero-savings::after {
+      content: "";
+      position: absolute;
+      bottom: -60px; left: -40px;
+      width: 180px; height: 180px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.05);
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between flex-wrap gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--brand-900);">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3v18h18"/>
+            <path d="M7 14l4-4 4 4 5-5"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-slate-900">EOQ Dashboard</h1>
+          <p class="text-sm text-slate-500">การวิเคราะห์ปริมาณการสั่งซื้อที่เหมาะสม — คลังสินค้าวัสดุก่อสร้าง</p>
+        </div>
+      </div>
+      <div class="text-sm text-slate-500 num">
+        ข้อมูล ณ วันที่ 15 กรกฎาคม 2569 · ปีงบประมาณ 2569
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-8 space-y-6">
+
+    <!-- Hero KPIs -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="card kpi kpi-navy p-5">
+        <div class="text-sm text-slate-500 font-medium">มูลค่าวัสดุรวมต่อปี</div>
+        <div class="text-3xl font-bold text-slate-900 mt-2 num">฿ 78.37M</div>
+        <div class="text-xs text-slate-500 mt-1">78,366,000 บาท · 12 รายการ</div>
+      </div>
+
+      <div class="card kpi kpi-blue p-5">
+        <div class="text-sm text-slate-500 font-medium">รายการกลุ่ม A (สำคัญสูง)</div>
+        <div class="text-3xl font-bold text-slate-900 mt-2 num">4 <span class="text-base font-medium text-slate-500">รายการ</span></div>
+        <div class="text-xs text-slate-500 mt-1">คิดเป็น 77.7% ของมูลค่าทั้งหมด</div>
+      </div>
+
+      <div class="card kpi kpi-amber p-5">
+        <div class="text-sm text-slate-500 font-medium">รายการที่คำนวณ EOQ แล้ว</div>
+        <div class="text-3xl font-bold text-slate-900 mt-2 num">3 <span class="text-base font-medium text-slate-500">รายการ</span></div>
+        <div class="text-xs text-slate-500 mt-1">MAT001 · MAT002 · MAT003</div>
+      </div>
+
+      <div class="card kpi kpi-emerald p-5">
+        <div class="text-sm text-slate-500 font-medium">เงินที่ประหยัดได้ต่อปี</div>
+        <div class="text-3xl font-bold text-emerald-700 mt-2 num">฿ 138,733</div>
+        <div class="text-xs text-emerald-700 mt-1 font-medium">▼ ลดต้นทุนสั่งซื้อ+ถือครอง 1.06%</div>
+      </div>
+    </section>
+
+    <!-- ABC Analysis Section -->
+    <section>
+      <div class="flex items-baseline justify-between mb-3 flex-wrap gap-2">
+        <h2 class="text-lg font-bold text-slate-900">ส่วนที่ 1 · ABC Analysis</h2>
+        <span class="text-sm text-slate-500">หลักการพาเรโต้ 80/20 — แบ่งกลุ่มวัสดุตามมูลค่า</span>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="card px-5 py-3 mb-4 flex items-center justify-between flex-wrap gap-3">
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-semibold text-slate-700 mr-2">ดูรายละเอียดกลุ่ม:</span>
+          <div class="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-1" role="tablist" id="classFilter">
+            <button data-filter="ALL" class="filter-btn filter-btn-active px-4 py-1.5 text-sm font-semibold rounded-md transition-all">
+              ทั้งหมด <span class="text-xs opacity-70 num ml-1">12</span>
+            </button>
+            <button data-filter="A" class="filter-btn px-4 py-1.5 text-sm font-semibold rounded-md transition-all">
+              <span class="legend-dot" style="background: #1e3a8a;"></span>Class A <span class="text-xs opacity-70 num ml-1">4</span>
+            </button>
+            <button data-filter="B" class="filter-btn px-4 py-1.5 text-sm font-semibold rounded-md transition-all">
+              <span class="legend-dot" style="background: #0ea5e9;"></span>Class B <span class="text-xs opacity-70 num ml-1">5</span>
+            </button>
+            <button data-filter="C" class="filter-btn px-4 py-1.5 text-sm font-semibold rounded-md transition-all">
+              <span class="legend-dot" style="background: #94a3b8;"></span>Class C <span class="text-xs opacity-70 num ml-1">3</span>
+            </button>
+          </div>
+        </div>
+        <div class="text-xs text-slate-500">
+          คลิกปุ่มเพื่อกรองข้อมูลเฉพาะกลุ่ม · กราฟและตารางจะอัปเดตอัตโนมัติ
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+        <!-- Pareto Chart -->
+        <div class="card p-5 lg:col-span-2">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <div class="text-sm font-semibold text-slate-900">Pareto Chart — มูลค่าและสัดส่วนสะสม</div>
+              <div class="text-xs text-slate-500 mt-0.5">เรียงตามมูลค่ารวมต่อปี (บาท) เรียงจากมากไปน้อย</div>
+            </div>
+            <div class="flex items-center gap-3 text-xs">
+              <span class="text-slate-500"><span class="legend-dot" style="background: var(--brand-500);"></span>มูลค่า</span>
+              <span class="text-slate-500"><span class="legend-dot" style="background: var(--accent-warn);"></span>% สะสม</span>
+            </div>
+          </div>
+          <div class="chart-wrap chart-wrap-lg">
+            <canvas id="paretoChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Class Distribution Donut -->
+        <div class="card p-5">
+          <div class="text-sm font-semibold text-slate-900 mb-1">สัดส่วนมูลค่าตามกลุ่ม</div>
+          <div class="text-xs text-slate-500 mb-4">A: สัดส่วนน้อยแต่มูลค่าสูง · C: สัดส่วนมากแต่มูลค่าต่ำ</div>
+          <div class="chart-wrap chart-wrap">
+            <canvas id="classDonut"></canvas>
+          </div>
+          <div class="grid grid-cols-3 gap-2 mt-4 text-center">
+            <div class="p-2 rounded-lg" style="background: #dbeafe;">
+              <div class="text-xs text-blue-900 font-semibold">กลุ่ม A</div>
+              <div class="text-sm font-bold text-blue-900 num">77.7%</div>
+            </div>
+            <div class="p-2 rounded-lg" style="background: #e0f2fe;">
+              <div class="text-xs text-sky-900 font-semibold">กลุ่ม B</div>
+              <div class="text-sm font-bold text-sky-900 num">16.2%</div>
+            </div>
+            <div class="p-2 rounded-lg" style="background: #f1f5f9;">
+              <div class="text-xs text-slate-700 font-semibold">กลุ่ม C</div>
+              <div class="text-sm font-bold text-slate-700 num">6.1%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ABC Detail Table -->
+      <div class="card mt-4 overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <div class="text-sm font-semibold text-slate-900">รายละเอียด ABC Analysis — <span id="abcCountLabel">12</span> รายการ</div>
+            <div class="text-xs text-slate-500 mt-0.5">เรียงตามมูลค่ารวมต่อปี (มาก → น้อย)</div>
+          </div>
+          <div id="filterTag" class="text-xs px-3 py-1 rounded-full font-semibold" style="background: var(--surface-tint); color: var(--ink-700);">
+            กำลังแสดง: ทั้งหมด
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table>
+            <thead>
+              <tr>
+                <th class="text-center w-12">#</th>
+                <th>รหัส</th>
+                <th>ชื่อสินค้า</th>
+                <th class="text-right">Demand (ปี)</th>
+                <th class="text-right">ราคา/หน่วย</th>
+                <th class="text-right">มูลค่ารวม (บาท)</th>
+                <th class="text-right">สัดส่วน (%)</th>
+                <th class="text-right">สะสม (%)</th>
+                <th class="text-center">Class</th>
+              </tr>
+            </thead>
+            <tbody id="abcBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Class Drill-Down Panel -->
+      <div class="mt-4">
+        <div class="flex items-center justify-between mb-3">
+          <div class="text-sm font-semibold text-slate-900">
+            🔍 รายละเอียดเชิงลึก: <span id="detailClassName" class="text-blue-900">ทุกกลุ่ม</span>
+          </div>
+          <div class="text-xs text-slate-500">อัปเดตตามฟิวเตอร์ที่เลือก</div>
+        </div>
+
+        <!-- Stat tiles per class -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="detailStats">
+          <!-- populated by JS -->
+        </div>
+
+        <!-- Strategy + Top item -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 mt-3">
+          <div class="card p-5 lg:col-span-2">
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">กลยุทธ์การจัดการสินค้าคงคลัง</div>
+            <div class="text-sm text-slate-700 leading-relaxed" id="strategyText"></div>
+            <div class="mt-4 grid grid-cols-3 gap-3">
+              <div class="p-3 rounded-lg" style="background: #f8fafc;">
+                <div class="text-xs text-slate-500">ความถี่ในการสั่งซื้อ</div>
+                <div class="text-base font-bold text-slate-900 mt-0.5" id="freqHint">—</div>
+              </div>
+              <div class="p-3 rounded-lg" style="background: #f8fafc;">
+                <div class="text-xs text-slate-500">ความถี่ในการตรวจนับ</div>
+                <div class="text-base font-bold text-slate-900 mt-0.5" id="countHint">—</div>
+              </div>
+              <div class="p-3 rounded-lg" style="background: #f8fafc;">
+                <div class="text-xs text-slate-500">ระดับ Safety Stock</div>
+                <div class="text-base font-bold text-slate-900 mt-0.5" id="safetyHint">—</div>
+              </div>
+            </div>
+          </div>
+          <div class="card p-5" id="topItemCard">
+            <!-- populated by JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- EOQ Analysis Section -->
+    <section>
+      <div class="flex items-baseline justify-between mb-3">
+        <h2 class="text-lg font-bold text-slate-900">ส่วนที่ 2 · EOQ &amp; Cost Comparison</h2>
+        <span class="text-sm text-slate-500">เปรียบเทียบแผนเดิม vs EOQ — ลดต้นทุนรวมต่อปี</span>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+        <!-- Cost Comparison -->
+        <div class="card p-5">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <div class="text-sm font-semibold text-slate-900">ต้นทุนรวมต่อปี — แผนเดิม vs EOQ</div>
+              <div class="text-xs text-slate-500 mt-0.5">Total Cost = ต้นทุนสั่งซื้อ + ต้นทุนถือครอง</div>
+            </div>
+            <div class="flex items-center gap-3 text-xs">
+              <span class="text-slate-500"><span class="legend-dot" style="background: var(--accent-old);"></span>แผนเดิม</span>
+              <span class="text-slate-500"><span class="legend-dot" style="background: var(--accent-new);"></span>EOQ</span>
+            </div>
+          </div>
+          <div class="chart-wrap chart-wrap-lg">
+            <canvas id="costChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Order Frequency -->
+        <div class="card p-5">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <div class="text-sm font-semibold text-slate-900">จำนวนครั้งที่สั่งซื้อต่อปี</div>
+              <div class="text-xs text-slate-500 mt-0.5">สั่งบ่อยขึ้นแต่ปริมาณน้อยลง ลดต้นทุนถือครอง</div>
+            </div>
+            <div class="flex items-center gap-3 text-xs">
+              <span class="text-slate-500"><span class="legend-dot" style="background: var(--accent-old);"></span>แผนเดิม</span>
+              <span class="text-slate-500"><span class="legend-dot" style="background: var(--accent-new);"></span>EOQ</span>
+            </div>
+          </div>
+          <div class="chart-wrap chart-wrap-lg">
+            <canvas id="freqChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- EOQ Detail Table -->
+      <div class="card mt-4 overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-200">
+          <div class="text-sm font-semibold text-slate-900">ตารางสรุป EOQ — 3 รายการ</div>
+          <div class="text-xs text-slate-500 mt-0.5">EOQ = √(2DS/H) · ROP = อัตราการใช้ × Lead Time</div>
+        </div>
+        <div class="overflow-x-auto">
+          <table>
+            <thead>
+              <tr>
+                <th>รหัส</th>
+                <th>ชื่อสินค้า</th>
+                <th class="text-right">Demand (ปี)</th>
+                <th class="text-right">ราคา/หน่วย</th>
+                <th class="text-right">ต้นทุนสั่ง</th>
+                <th class="text-right">Hold %</th>
+                <th class="text-right">Lead (วัน)</th>
+                <th class="text-center">Class</th>
+                <th class="text-right">EOQ</th>
+                <th class="text-right">ROP</th>
+                <th class="text-right">ครั้ง/ปี (เดิม)</th>
+                <th class="text-right">ครั้ง/ปี (EOQ)</th>
+                <th class="text-right">TC เดิม</th>
+                <th class="text-right">TC EOQ</th>
+                <th class="text-right">ประหยัด/ปี</th>
+              </tr>
+            </thead>
+            <tbody id="eoqBody"></tbody>
+            <tfoot>
+              <tr style="background: var(--surface-tint);">
+                <td colspan="14" class="text-right font-semibold text-slate-700">รวมเงินที่ประหยัดได้ทั้งปี</td>
+                <td class="text-right font-bold text-emerald-700 num" id="totalSavings"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Savings Highlight -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="hero-savings lg:col-span-2">
+        <div class="relative z-10">
+          <div class="text-sm font-medium opacity-90">ผลรวมเงินที่ประหยัดได้ต่อปี</div>
+          <div class="text-5xl font-bold mt-2 num">฿ 138,732.95</div>
+          <div class="text-sm opacity-90 mt-2">จากการปรับใช้ EOQ กับ 3 รายการวัสดุกลุ่ม A/B</div>
+          <div class="mt-4 grid grid-cols-3 gap-4 pt-4 border-t border-white/20">
+            <div>
+              <div class="text-xs opacity-80">MAT001 · ปูนซีเมนต์</div>
+              <div class="text-lg font-bold num">฿ 99,783.50</div>
+              <div class="text-xs opacity-80">71.9% ของการประหยัด</div>
+            </div>
+            <div>
+              <div class="text-xs opacity-80">MAT003 · เหล็กเส้นข้ออ้อย</div>
+              <div class="text-lg font-bold num">฿ 26,325.60</div>
+              <div class="text-xs opacity-80">19.0% ของการประหยัด</div>
+            </div>
+            <div>
+              <div class="text-xs opacity-80">MAT002 · อิฐมวลเบา</div>
+              <div class="text-lg font-bold num">฿ 12,623.85</div>
+              <div class="text-xs opacity-80">9.1% ของการประหยัด</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card p-5">
+        <div class="text-sm font-semibold text-slate-900 mb-3">สูตรที่ใช้คำนวณ</div>
+        <div class="space-y-3 text-sm text-slate-700">
+          <div class="p-3 rounded-lg bg-slate-50">
+            <div class="text-xs text-slate-500 mb-1">Economic Order Quantity</div>
+            <div class="font-mono font-semibold text-slate-900">EOQ = √(2 × D × S / H)</div>
+            <div class="text-xs text-slate-500 mt-1">D = อุปสงค์/ปี · S = ต้นทุนสั่งซื้อ · H = ต้นทุนถือครอง</div>
+          </div>
+          <div class="p-3 rounded-lg bg-slate-50">
+            <div class="text-xs text-slate-500 mb-1">Reorder Point</div>
+            <div class="font-mono font-semibold text-slate-900">ROP = อัตราการใช้ × Lead Time</div>
+            <div class="text-xs text-slate-500 mt-1">จุดสั่งซื้อใหม่เพื่อไม่ให้ของขาด</div>
+          </div>
+          <div class="p-3 rounded-lg bg-slate-50">
+            <div class="text-xs text-slate-500 mb-1">Total Cost</div>
+            <div class="font-mono font-semibold text-slate-900">TC = (D/Q)S + (Q/2)H</div>
+            <div class="text-xs text-slate-500 mt-1">ต้นทุนรวม = ต้นทุนสั่ง + ต้นทุนถือครอง</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="text-center text-xs text-slate-400 py-6">
+      EOQ Dashboard · สร้างจากข้อมูล อีโอคิว 99%.xlsx · ประมวลผลด้วย Chart.js
+    </footer>
+  </main>
+
+  <script>
+    // ===== Data =====
+    const abcData = [
+      { code: 'MAT008', name: 'คอนกรีตผสมเสร็จ (คิว)',         demand: 18000,  price: 1950, value: 35100000, pct: 0.4479, cum: 0.4479, class: 'A' },
+      { code: 'MAT011', name: 'ทรายหยาบ (คิว)',                  demand: 22000,  price: 550,  value: 12100000, pct: 0.1544, cum: 0.6023, class: 'A' },
+      { code: 'MAT001', name: 'ปูนซีเมนต์ (ถุง)',                 demand: 48000,  price: 145,  value: 6960000,  pct: 0.0888, cum: 0.6911, class: 'A' },
+      { code: 'MAT010', name: 'หินย่อย 3/4 (คิว)',               demand: 15000,  price: 450,  value: 6750000,  pct: 0.0861, cum: 0.7773, class: 'A' },
+      { code: 'MAT003', name: 'เหล็กเส้นข้ออ้อย',                demand: 15000,  price: 240,  value: 3600000,  pct: 0.0459, cum: 0.8232, class: 'B' },
+      { code: 'MAT004', name: 'กระเบื้องปูพื้น 60x60 (กล่อง)',   demand: 8500,   price: 320,  value: 2720000,  pct: 0.0347, cum: 0.8579, class: 'B' },
+      { code: 'MAT005', name: 'สีทาภายนอก (ถัง 5 แกลลอน)',       demand: 1200,   price: 1850, value: 2220000,  pct: 0.0283, cum: 0.8862, class: 'B' },
+      { code: 'MAT002', name: 'อิฐมวลเบา (ชิ้น)',                demand: 120000, price: 18,   value: 2160000,  pct: 0.0276, cum: 0.9138, class: 'B' },
+      { code: 'MAT007', name: 'สายไฟ THW 2.5 SQ.MM. (ม้วน)',     demand: 2400,   price: 820,  value: 1968000,  pct: 0.0251, cum: 0.9389, class: 'B' },
+      { code: 'MAT012', name: 'บานประตูไม้สำเร็จรูป (บาน)',     demand: 800,    price: 2400, value: 1920000,  pct: 0.0245, cum: 0.9634, class: 'C' },
+      { code: 'MAT009', name: 'เหล็กกล่อง 2x2 นิ้ว',            demand: 6000,   price: 310,  value: 1860000,  pct: 0.0237, cum: 0.9871, class: 'C' },
+      { code: 'MAT006', name: 'ท่อ PVC ฟ้า 4 นิ้ว (ท่อน)',       demand: 3600,   price: 280,  value: 1008000,  pct: 0.0129, cum: 1.0000, class: 'C' }
+    ];
+
+    const eoqData = [
+      { code: 'MAT001', name: 'ปูนซีเมนต์ (ถุง)',           demand: 48000,  price: 145,  s: 2500, h: 0.2,  lt: 7,  class: 'A', eoq: 2877, rop: 921,  oldN: 4,  oldTC: 7144000,   newN: 17, newTC: 7044216.5,  saving: 99783.5  },
+      { code: 'MAT002', name: 'อิฐมวลเบา (ชิ้น)',            demand: 120000, price: 18,   s: 1800, h: 0.15, lt: 5,  class: 'B', eoq: 12649,rop: 1644, oldN: 4,  oldTC: 2207700,   newN: 10, newTC: 2195076.15, saving: 12623.85 },
+      { code: 'MAT003', name: 'เหล็กเส้นข้ออ้อย DB12',      demand: 15000,  price: 240,  s: 3500, h: 0.18, lt: 10, class: 'B', eoq: 1559, rop: 411,  oldN: 4,  oldTC: 3695000,   newN: 10, newTC: 3668674.4,  saving: 26325.6  }
+    ];
+
+    // ===== Helpers =====
+    const fmt = n => n.toLocaleString('th-TH', { maximumFractionDigits: 2 });
+    const fmtM = n => (n / 1_000_000).toFixed(2) + 'M';
+
+    // ===== Render ABC Table =====
+    function renderAbcTable(filter) {
+      const abcBody = document.getElementById('abcBody');
+      abcBody.innerHTML = '';
+      const filtered = filter === 'ALL' ? abcData : abcData.filter(r => r.class === filter);
+
+      filtered.forEach((r, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="text-center text-slate-400 num">${i + 1}</td>
+          <td class="font-mono text-slate-900 font-semibold">${r.code}</td>
+          <td>${r.name}</td>
+          <td class="text-right num">${fmt(r.demand)}</td>
+          <td class="text-right num">${fmt(r.price)}</td>
+          <td class="text-right num font-semibold text-slate-900">${fmt(r.value)}</td>
+          <td class="text-right num">${(r.pct * 100).toFixed(2)}%</td>
+          <td class="text-right num">${(r.cum * 100).toFixed(2)}%</td>
+          <td class="text-center"><span class="pill pill-${r.class}">${r.class}</span></td>
+        `;
+        abcBody.appendChild(tr);
+      });
+
+      document.getElementById('abcCountLabel').textContent = filtered.length;
+      const tag = document.getElementById('filterTag');
+      if (filter === 'ALL') {
+        tag.textContent = 'กำลังแสดง: ทั้งหมด (12 รายการ)';
+        tag.style.background = 'var(--surface-tint)';
+        tag.style.color = 'var(--ink-700)';
+      } else {
+        const c = classTotals.find(x => x.cls === filter);
+        tag.textContent = `กำลังแสดง: Class ${filter} (${c.count} รายการ · ${fmt(c.value)} บาท)`;
+        tag.style.background = classColorsFade[filter];
+        tag.style.color = classColors[filter];
+      }
+    }
+    renderAbcTable('ALL');
+
+    // ===== Render EOQ Table =====
+    const eoqBody = document.getElementById('eoqBody');
+    eoqData.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="font-mono text-slate-900 font-semibold">${r.code}</td>
+        <td>${r.name}</td>
+        <td class="text-right num">${fmt(r.demand)}</td>
+        <td class="text-right num">${fmt(r.price)}</td>
+        <td class="text-right num">${fmt(r.s)}</td>
+        <td class="text-right num">${(r.h * 100).toFixed(0)}%</td>
+        <td class="text-right num">${r.lt}</td>
+        <td class="text-center"><span class="pill pill-${r.class}">${r.class}</span></td>
+        <td class="text-right num font-semibold text-slate-900">${fmt(r.eoq)}</td>
+        <td class="text-right num">${fmt(r.rop)}</td>
+        <td class="text-right num text-slate-500">${r.oldN}</td>
+        <td class="text-right num font-semibold text-emerald-700">${r.newN}</td>
+        <td class="text-right num text-slate-500">${fmtM(r.oldTC)}</td>
+        <td class="text-right num font-semibold text-emerald-700">${fmtM(r.newTC)}</td>
+        <td class="text-right num font-bold text-emerald-700">+${fmt(r.saving)}</td>
+      `;
+      eoqBody.appendChild(tr);
+    });
+    const totalSaving = eoqData.reduce((s, r) => s + r.saving, 0);
+    document.getElementById('totalSavings').textContent = '+ ' + fmt(totalSaving) + ' บาท';
+
+    // ===== Chart.js global =====
+    Chart.defaults.font.family = "'Sarabun', system-ui, sans-serif";
+    Chart.defaults.color = '#475569';
+    Chart.defaults.borderColor = '#e2e8f0';
+
+    const classColors = { A: '#1e3a8a', B: '#0ea5e9', C: '#94a3b8' };
+    const classColorsFade = { A: 'rgba(30,58,138,0.18)', B: 'rgba(14,165,233,0.18)', C: 'rgba(148,163,184,0.18)' };
+
+    // ===== Strategy text per class =====
+    const classStrategy = {
+      ALL: {
+        title: 'ภาพรวมทุกกลุ่ม',
+        color: '#0f172a',
+        text: 'การแบ่งกลุ่มตามหลักพาเรโต้ 80/20 ช่วยให้สามารถจัดสรรทรัพยากรในการควบคุมสินค้าคงคลังได้อย่างเหมาะสม — ใช้การควบคุมเข้มงวดกับกลุ่ม A และลดความเข้มงวดลงตามลำดับในกลุ่ม B และ C เพื่อลดต้นทุนการจัดการโดยรวม',
+        freq: 'หลากหลายตามกลุ่ม',
+        count: 'หลากหลายตามกลุ่ม',
+        safety: 'จัดการตามความเสี่ยง'
+      },
+      A: {
+        title: 'Class A · ควบคุมเข้มงวด (Tight Control)',
+        color: '#1e3a8a',
+        text: 'วัสดุกลุ่ม A มีมูลค่าสูงถึง 77.7% ของคลังทั้งหมด จึงต้องใช้การควบคุมอย่างเข้มงวดที่สุด: ติดตามสต็อกแบบเรียลไทม์, ใช้ EOQ และ ROP ในการสั่งซื้อ, ทำการตรวจนับบ่อยครั้ง, เจรจาต่อรองกับซัพพลายเออร์เพื่อขยายเครดิต, และพิจารณาใช้ Just-In-Time เพื่อลดต้นทุนถือครอง',
+        freq: 'บ่อยมาก · ทุกสัปดาห์หรือบ่อยกว่า',
+        count: 'ทุกวันหรือทุกสัปดาห์',
+        safety: 'ต่ำ · เน้นความแม่นยำของ ROP'
+      },
+      B: {
+        title: 'Class B · ควบคุมปานกลาง (Moderate Control)',
+        color: '#075985',
+        text: 'วัสดุกลุ่ม B มีมูลค่าปานกลาง 16.2% ของคลัง การควบคุมใช้ระบบกึ่งอัตโนมัติ: ตรวจนับเป็นรายสัปดาห์หรือรายเดือน, ทบทวน EOQ เป็นระยะ, ใช้ระบบ Min/Max ในการสั่งซื้อ, และมี Safety Stock ที่เหมาะสมเพื่อลดความเสี่ยงจากความผันผวนของอุปสงค์',
+        freq: 'ปานกลาง · ทุก 2–4 สัปดาห์',
+        count: 'ทุกสัปดาห์หรือทุกเดือน',
+        safety: 'ปานกลาง · กันช่วงผันผวนของดีมานด์'
+      },
+      C: {
+        title: 'Class C · ควบคุมแบบง่าย (Simple Control)',
+        color: '#475569',
+        text: 'วัสดุกลุ่ม C มีมูลค่าเพียง 6.1% ของคลัง แต่มีจำนวนรายการมาก จึงควรใช้ระบบควบคุมแบบง่ายเพื่อลดต้นทุนการจัดการ: สั่งซื้อครั้งละมากๆ ในปริมาณมาก (Bulk Order), ตรวจนับเป็นรายไตรมาส, ใช้ระบบ Two-Bin หรือ Visual Review, และพิจารณายกเลิกรายการที่ไม่จำเป็นออก',
+        freq: 'น้อย · ทุก 1–3 เดือน',
+        count: 'ทุกไตรมาสหรือทุก 6 เดือน',
+        safety: 'สูง · กันของขาดระหว่างรอบสั่งซื้อยาว'
+      }
+    };
+
+    // ===== Pareto Chart =====
+    const paretoCtx = document.getElementById('paretoChart').getContext('2d');
+    const paretoChart = new Chart(paretoCtx, {
+      data: {
+        labels: abcData.map(r => r.name),
+        datasets: [
+          {
+            type: 'bar',
+            label: 'มูลค่ารวมต่อปี (บาท)',
+            data: abcData.map(r => r.value),
+            backgroundColor: abcData.map(r => classColors[r.class]),
+            borderRadius: 6,
+            borderSkipped: false,
+            yAxisID: 'y',
+            maxBarThickness: 36
+          },
+          {
+            type: 'line',
+            label: '% มูลค่าสะสม',
+            data: abcData.map(r => +(r.cum * 100).toFixed(2)),
+            borderColor: '#f59e0b',
+            backgroundColor: '#f59e0b',
+            pointBackgroundColor: '#f59e0b',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 5,
+            pointHoverRadius: 7,
+            borderWidth: 2.5,
+            tension: 0.25,
+            yAxisID: 'y1'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        layout: { padding: { bottom: 20 } },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            padding: 12,
+            cornerRadius: 8,
+            titleFont: { weight: '600', size: 13 },
+            callbacks: {
+              title: (items) => {
+                const r = abcData[items[0].dataIndex];
+                return `${r.code} · ${r.name}`;
+              },
+              label: (ctx) => {
+                if (ctx.dataset.label.includes('มูลค่า')) {
+                  return 'มูลค่า: ' + fmt(ctx.parsed.y) + ' บาท';
+                }
+                return 'สะสม: ' + ctx.parsed.y.toFixed(2) + '%';
+              },
+              afterLabel: (ctx) => {
+                const r = abcData[ctx.dataIndex];
+                return `Class ${r.class} · สัดส่วน ${(r.pct*100).toFixed(2)}%`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: {
+              font: { size: 10 },
+              autoSkip: false,
+              maxRotation: 45,
+              minRotation: 0,
+              padding: 6,
+              callback: function(value) {
+                // Truncate long names with ellipsis
+                const lbl = this.getLabelForValue(value);
+                return lbl.length > 14 ? lbl.slice(0, 13) + '…' : lbl;
+              }
+            }
+          },
+          y: {
+            beginAtZero: true,
+            grid: { color: '#f1f5f9' },
+            ticks: {
+              callback: (v) => (v / 1_000_000).toFixed(0) + 'M'
+            },
+            title: { display: true, text: 'มูลค่า (บาท)', font: { size: 11, weight: '600' }, color: '#64748b' }
+          },
+          y1: {
+            beginAtZero: true,
+            max: 100,
+            position: 'right',
+            grid: { display: false },
+            ticks: { callback: (v) => v + '%', font: { size: 11 } },
+            title: { display: true, text: 'สะสม (%)', font: { size: 11, weight: '600' }, color: '#64748b' }
+          }
+        }
+      }
+    });
+
+    // ===== Class Donut =====
+    const classTotals = ['A','B','C'].map(c => ({
+      cls: c,
+      value: abcData.filter(r => r.class === c).reduce((s, r) => s + r.value, 0),
+      count: abcData.filter(r => r.class === c).length
+    }));
+    const totalAll = classTotals.reduce((s, c) => s + c.value, 0);
+
+    const donutCtx = document.getElementById('classDonut').getContext('2d');
+    const donutChart = new Chart(donutCtx, {
+      type: 'doughnut',
+      data: {
+        labels: classTotals.map(c => `Class ${c.cls}`),
+        datasets: [{
+          data: classTotals.map(c => c.value),
+          backgroundColor: [classColors.A, classColors.B, classColors.C],
+          borderColor: '#ffffff',
+          borderWidth: 3,
+          hoverOffset: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '65%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { padding: 12, font: { size: 12 }, usePointStyle: true, pointStyle: 'circle' }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            padding: 12,
+            cornerRadius: 8,
+            callbacks: {
+              label: (ctx) => {
+                const v = ctx.parsed;
+                const pct = (v / totalAll * 100).toFixed(1);
+                const c = classTotals[ctx.dataIndex];
+                return `Class ${c.cls}: ${fmt(v)} บาท (${pct}%) · ${c.count} รายการ`;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // ===== Cost Comparison Chart =====
+    const costCtx = document.getElementById('costChart').getContext('2d');
+    new Chart(costCtx, {
+      type: 'bar',
+      data: {
+        labels: eoqData.map(r => r.name),
+        datasets: [
+          {
+            label: 'TC แผนเดิม',
+            data: eoqData.map(r => r.oldTC),
+            backgroundColor: '#94a3b8',
+            borderRadius: 6,
+            borderSkipped: false,
+            maxBarThickness: 50
+          },
+          {
+            label: 'TC แผน EOQ',
+            data: eoqData.map(r => r.newTC),
+            backgroundColor: '#10b981',
+            borderRadius: 6,
+            borderSkipped: false,
+            maxBarThickness: 50
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: { bottom: 10 } },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            padding: 12,
+            cornerRadius: 8,
+            callbacks: {
+              title: (items) => {
+                const r = eoqData[items[0].dataIndex];
+                return `${r.code} · ${r.name}`;
+              },
+              label: (ctx) => `${ctx.dataset.label}: ${fmt(ctx.parsed.y)} บาท`,
+              afterBody: (items) => {
+                const i = items[0].dataIndex;
+                const r = eoqData[i];
+                return `ประหยัด: ${fmt(r.saving)} บาท (${((r.saving/r.oldTC)*100).toFixed(2)}%)`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: {
+              font: { size: 11 },
+              autoSkip: false,
+              maxRotation: 25,
+              minRotation: 0
+            }
+          },
+          y: {
+            beginAtZero: true,
+            grid: { color: '#f1f5f9' },
+            ticks: { callback: (v) => (v / 1_000_000).toFixed(1) + 'M' }
+          }
+        }
+      }
+    });
+
+    // ===== Order Frequency Chart =====
+    const freqCtx = document.getElementById('freqChart').getContext('2d');
+    new Chart(freqCtx, {
+      type: 'bar',
+      data: {
+        labels: eoqData.map(r => r.name),
+        datasets: [
+          {
+            label: 'ครั้ง/ปี (แผนเดิม)',
+            data: eoqData.map(r => r.oldN),
+            backgroundColor: '#94a3b8',
+            borderRadius: 6,
+            borderSkipped: false,
+            maxBarThickness: 50
+          },
+          {
+            label: 'ครั้ง/ปี (EOQ)',
+            data: eoqData.map(r => r.newN),
+            backgroundColor: '#10b981',
+            borderRadius: 6,
+            borderSkipped: false,
+            maxBarThickness: 50
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: { bottom: 10 } },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            padding: 12,
+            cornerRadius: 8,
+            callbacks: {
+              title: (items) => {
+                const r = eoqData[items[0].dataIndex];
+                return `${r.code} · ${r.name}`;
+              },
+              label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y} ครั้ง`
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: {
+              font: { size: 11 },
+              autoSkip: false,
+              maxRotation: 25,
+              minRotation: 0
+            }
+          },
+          y: {
+            beginAtZero: true,
+            grid: { color: '#f1f5f9' },
+            ticks: { stepSize: 5 }
+          }
+        }
+      }
+    });
+
+    // ===== Filter Logic =====
+    let currentFilter = 'ALL';
+
+    function applyFilter(filter) {
+      currentFilter = filter;
+
+      // Update button states
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        if (btn.dataset.filter === filter) {
+          btn.classList.add('filter-btn-active');
+        } else {
+          btn.classList.remove('filter-btn-active');
+        }
+      });
+
+      // Re-render table
+      renderAbcTable(filter);
+
+      // Update Pareto chart
+      const filtered = filter === 'ALL' ? abcData : abcData.filter(r => r.class === filter);
+      paretoChart.data.labels = filtered.map(r => r.name);
+      paretoChart.data.datasets[0].data = filtered.map(r => r.value);
+      paretoChart.data.datasets[0].backgroundColor = filtered.map(r => classColors[r.class]);
+      paretoChart.data.datasets[1].data = filtered.map(r => +(r.cum * 100).toFixed(2));
+      paretoChart.options.plugins.tooltip.callbacks.title = (items) => {
+        const r = filtered[items[0].dataIndex];
+        return `${r.code} · ${r.name}`;
+      };
+      paretoChart.options.plugins.tooltip.callbacks.afterLabel = (ctx) => {
+        const r = filtered[ctx.dataIndex];
+        return `Class ${r.class} · สัดส่วน ${(r.pct*100).toFixed(2)}%`;
+      };
+      paretoChart.update();
+
+      // Update Donut chart (highlight selected segment)
+      if (filter === 'ALL') {
+        donutChart.data.datasets[0].backgroundColor = [classColors.A, classColors.B, classColors.C];
+      } else {
+        donutChart.data.datasets[0].backgroundColor = ['A','B','C'].map(c =>
+          c === filter ? classColors[c] : classColorsFade[c]
+        );
+      }
+      donutChart.update();
+
+      // Update Drill-Down Panel
+      renderDrillDown(filter);
+    }
+
+    // ===== Drill-Down Detail Panel =====
+    function renderDrillDown(filter) {
+      const strat = classStrategy[filter];
+      document.getElementById('detailClassName').textContent = strat.title.split(' · ')[0];
+      document.getElementById('detailClassName').style.color = strat.color;
+      document.getElementById('strategyText').textContent = strat.text;
+      document.getElementById('freqHint').textContent = strat.freq;
+      document.getElementById('countHint').textContent = strat.count;
+      document.getElementById('safetyHint').textContent = strat.safety;
+
+      // Compute stats
+      const subset = filter === 'ALL' ? abcData : abcData.filter(r => r.class === filter);
+      const subsetVal = subset.reduce((s, r) => s + r.value, 0);
+      const subsetCount = subset.length;
+      const avgVal = subsetCount ? subsetVal / subsetCount : 0;
+      const top = subset.slice().sort((a, b) => b.value - a.value)[0];
+      const minVal = subset.length ? Math.min(...subset.map(r => r.value)) : 0;
+      const maxVal = subset.length ? Math.max(...subset.map(r => r.value)) : 0;
+      const sharePct = (subsetVal / totalAll) * 100;
+
+      const stats = document.getElementById('detailStats');
+      const accentColor = filter === 'ALL' ? '#0f172a' : classColors[filter];
+      stats.innerHTML = `
+        <div class="stat-tile stat-tile-accent">
+          <div class="text-xs text-slate-500 font-medium">จำนวนรายการ</div>
+          <div class="text-2xl font-bold text-slate-900 mt-1 num">${subsetCount}</div>
+          <div class="stat-tile-bar"><div class="stat-tile-bar-fill" style="width: ${(subsetCount/12)*100}%; background: ${accentColor};"></div></div>
+          <div class="text-xs text-slate-500 mt-1.5">จากทั้งหมด 12 รายการ</div>
+        </div>
+        <div class="stat-tile stat-tile-accent">
+          <div class="text-xs text-slate-500 font-medium">มูลค่ารวม (บาท)</div>
+          <div class="text-2xl font-bold text-slate-900 mt-1 num">${fmt(subsetVal)}</div>
+          <div class="stat-tile-bar"><div class="stat-tile-bar-fill" style="width: ${sharePct.toFixed(1)}%; background: ${accentColor};"></div></div>
+          <div class="text-xs text-slate-500 mt-1.5">${sharePct.toFixed(1)}% ของคลังทั้งหมด</div>
+        </div>
+        <div class="stat-tile stat-tile-accent">
+          <div class="text-xs text-slate-500 font-medium">มูลค่าเฉลี่ย/รายการ</div>
+          <div class="text-2xl font-bold text-slate-900 mt-1 num">${fmt(avgVal)}</div>
+          <div class="stat-tile-bar"><div class="stat-tile-bar-fill" style="width: ${Math.min((avgVal/15220000)*100, 100).toFixed(1)}%; background: ${accentColor};"></div></div>
+          <div class="text-xs text-slate-500 mt-1.5">บาท ต่อรายการ</div>
+        </div>
+        <div class="stat-tile stat-tile-accent">
+          <div class="text-xs text-slate-500 font-medium">ช่วงมูลค่า (Min–Max)</div>
+          <div class="text-base font-bold text-slate-900 mt-1 num">${fmt(minVal)} – ${fmt(maxVal)}</div>
+          <div class="stat-tile-bar"><div class="stat-tile-bar-fill" style="width: ${((maxVal/totalAll)*100).toFixed(1)}%; background: ${accentColor};"></div></div>
+          <div class="text-xs text-slate-500 mt-1.5">สูงสุด: ${fmt(maxVal)} บาท</div>
+        </div>
+      `;
+
+      // Top item card
+      const topCard = document.getElementById('topItemCard');
+      if (top) {
+        topCard.innerHTML = `
+          <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">สินค้ามูลค่าสูงสุด</div>
+          <div class="flex items-center gap-2 mb-2">
+            <span class="pill pill-${top.class}">${top.class}</span>
+            <span class="font-mono text-sm font-bold text-slate-900">${top.code}</span>
+          </div>
+          <div class="text-sm text-slate-700 font-medium mb-3">${top.name}</div>
+          <div class="text-3xl font-bold num" style="color: ${accentColor};">${fmt(top.value)}</div>
+          <div class="text-xs text-slate-500 mt-1">บาท/ปี · ${(top.pct*100).toFixed(1)}% ของคลัง</div>
+          <div class="mt-4 pt-3 border-t border-slate-200 grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <div class="text-slate-500">Demand</div>
+              <div class="font-semibold text-slate-900 num">${fmt(top.demand)} หน่วย</div>
+            </div>
+            <div>
+              <div class="text-slate-500">ราคา/หน่วย</div>
+              <div class="font-semibold text-slate-900 num">${fmt(top.price)} บาท</div>
+            </div>
+          </div>
+        `;
+      } else {
+        topCard.innerHTML = '<div class="text-sm text-slate-400">ไม่มีข้อมูล</div>';
+      }
+    }
+
+    // Hook up filter buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => applyFilter(btn.dataset.filter));
+    });
+
+    // Initial render
+    applyFilter('ALL');
+  </script>
+</body>
+</html>
